@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { Database } from '@/types/database.types'
 
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({
@@ -8,7 +9,7 @@ export async function updateSession(request: NextRequest) {
         },
     })
 
-    const supabase = createServerClient(
+    const supabase = createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
@@ -35,6 +36,7 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
+    // Protected routes
     // Protected routes
     if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
         return NextResponse.redirect(new URL('/login', request.url))

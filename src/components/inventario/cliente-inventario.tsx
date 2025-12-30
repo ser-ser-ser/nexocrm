@@ -1,17 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { InventoryFilters } from "./inventory-filters"
-import { InventoryTable } from "./inventory-table"
+import { FiltrosInventario } from "./filtros-inventario"
+import { TablaInventario } from "./tabla-inventario"
 import { Database } from "@/types/database.types"
 
 type Propiedad = Database["public"]["Tables"]["propiedades"]["Row"]
 
-interface InventoryClientProps {
+interface ClienteInventarioProps {
     initialData: Propiedad[]
 }
 
-export function InventoryClient({ initialData }: InventoryClientProps) {
+export function ClienteInventario({ initialData }: ClienteInventarioProps) {
     const [data, setData] = useState<Propiedad[]>(initialData)
     const [search, setSearch] = useState("")
     const [typeFilter, setTypeFilter] = useState<string>("todos")
@@ -38,13 +38,13 @@ export function InventoryClient({ initialData }: InventoryClientProps) {
                 </p>
             </div>
 
-            <InventoryFilters
+            <FiltrosInventario
                 onSearchChange={setSearch}
                 onTypeChange={setTypeFilter}
                 onOperationChange={setOperationFilter}
             />
 
-            <InventoryTable data={filteredData} />
+            <TablaInventario data={filteredData} />
         </div>
     )
 }

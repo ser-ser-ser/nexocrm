@@ -1,12 +1,12 @@
 import { createClient } from "@/utils/supabase/server"
-import { InventoryClient } from "@/components/inventory/inventory-client"
+import { ClienteInventario } from "@/components/inventario/cliente-inventario"
 
 export default async function InventoryPage() {
     const supabase = await createClient()
 
     const { data: propiedades, error } = await supabase
         .from("propiedades")
-        .select("*")
+        .select("*, perfiles(nombre_completo)")
         .order("creado_en", { ascending: false })
 
     if (error) {
@@ -16,7 +16,7 @@ export default async function InventoryPage() {
 
     return (
         <div className="container mx-auto py-8">
-            <InventoryClient initialData={propiedades || []} />
+            <ClienteInventario initialData={propiedades || []} />
         </div>
     )
 }

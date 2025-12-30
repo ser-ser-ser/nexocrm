@@ -14,17 +14,17 @@ import { Search } from "lucide-react"
 type TipoPropiedad = Database["public"]["Enums"]["tipo_propiedad"]
 type TipoOperacion = Database["public"]["Enums"]["tipo_operacion"]
 
-interface InventoryFiltersProps {
+interface FiltrosInventarioProps {
     onSearchChange: (value: string) => void
     onTypeChange: (value: TipoPropiedad | "todos") => void
     onOperationChange: (value: TipoOperacion | "todos") => void
 }
 
-export function InventoryFilters({
+export function FiltrosInventario({
     onSearchChange,
     onTypeChange,
     onOperationChange,
-}: InventoryFiltersProps) {
+}: FiltrosInventarioProps) {
     return (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between p-4 bg-background border rounded-lg shadow-sm">
             <div className="relative flex-1 md:max-w-sm">

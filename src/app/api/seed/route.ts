@@ -81,7 +81,7 @@ export async function GET(request: Request) {
             const { owner_ref, ...propData } = prop
 
             const { error: propError } = await supabaseAdmin
-                .from('properties')
+                .from('propiedades')
                 .insert({
                     owner_id: ownerId,
                     ...propData

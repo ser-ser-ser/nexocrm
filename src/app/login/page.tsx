@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Eye, EyeOff, Home, Mail, Lock, Phone as PhoneIcon, User, Briefcase } from "lucide-react"
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 
 export default function LoginPage() {
     const router = useRouter()
+    const supabase = createClient()
     const [mode, setMode] = useState<"login" | "signup">("login")
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -50,7 +51,7 @@ export default function LoginPage() {
                     options: {
                         data: {
                             full_name: fullName,
-                            role: 'agent', // Default role
+                            rol: 'agente', // Rol en español
                         }
                     }
                 })
@@ -63,11 +64,11 @@ export default function LoginPage() {
                     // Or assume the user is created and they can update profile later.
                     // For now, let's update profile with phone if possible
                     const { error: profileError } = await supabase
-                        .from('profiles')
+                        .from('perfiles')
                         .update({
-                            phone: phone,
-                            full_name: fullName,
-                            role: 'agent' // Assuming column exists
+                            telefono: phone,
+                            nombre_completo: fullName,
+                            rol: 'agente'
                         })
                         .eq('id', authData.user.id)
 

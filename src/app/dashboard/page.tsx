@@ -42,38 +42,38 @@ export default async function DashboardPage() {
 
     // 2. Get Profile & Agency Context
     const { data: profile } = await supabase
-        .from('profiles')
+        .from('perfiles')
         .select('*')
         .eq('id', user.id)
         .single()
 
-    const role = profile?.role || 'agent'
-    const agencyId = profile?.agency_id
+    const role = profile?.rol || 'agente' // 'rol' instead of 'role', default to 'agente'
+    const agencyId = profile?.id_agencia // 'id_agencia' instead of 'agency_id'
 
     // 3. Fetch Properties based on Role
     let propertiesQuery = supabase
-        .from('properties')
+        .from('propiedades')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('creado_en', { ascending: false }) // 'creado_en' instead of 'created_at'
 
-    if (role === 'agency_admin' && agencyId) {
+    if (role === 'admin_agencia' && agencyId) { // 'admin_agencia' instead of 'agency_admin'
         // Admin: Fetch all properties from users in the same agency
         // First, get list of agents in agency
         const { data: agencyMembers } = await supabase
-            .from('profiles')
+            .from('perfiles')
             .select('id')
-            .eq('agency_id', agencyId)
+            .eq('id_agencia', agencyId)
 
         if (agencyMembers && agencyMembers.length > 0) {
             const memberIds = agencyMembers.map(m => m.id)
-            propertiesQuery = propertiesQuery.in('owner_id', memberIds)
+            propertiesQuery = propertiesQuery.in('propietario_id', memberIds) // 'propietario_id' instead of 'owner_id'
         } else {
             // Fallback to own properties if no members found (weird case)
-            propertiesQuery = propertiesQuery.eq('owner_id', user.id)
+            propertiesQuery = propertiesQuery.eq('propietario_id', user.id)
         }
     } else {
         // Agent / Independent: Own properties only
-        propertiesQuery = propertiesQuery.eq('owner_id', user.id)
+        propertiesQuery = propertiesQuery.eq('propietario_id', user.id)
     }
 
     const { data: properties } = await propertiesQuery
@@ -83,7 +83,7 @@ export default async function DashboardPage() {
     const totalProperties = propertiesList.length
 
     // Simple sum assuming mostly MXN for MVP. In prod, convert currencies.
-    const totalValue = propertiesList.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0)
+    const totalValue = propertiesList.reduce((acc, curr) => acc + (Number(curr.precio) || 0), 0)
 
     const activeLeads = propertiesList.reduce((acc, curr) => {
         // Mock logic: randomly assume some properties have leads based on ID parity or just mock static
@@ -93,9 +93,9 @@ export default async function DashboardPage() {
     }, 0)
 
     const propertiesByCategory = {
-        Industrial: propertiesList.filter(p => p.category === 'industrial').length,
-        Comercial: propertiesList.filter(p => p.category === 'comercial').length,
-        Residencial: propertiesList.filter(p => p.category === 'residencial').length,
+        Industrial: propertiesList.filter(p => p.tipo === 'industrial').length,
+        Comercial: propertiesList.filter(p => p.tipo === 'comercial').length,
+        Residencial: propertiesList.filter(p => p.tipo === 'residencial').length,
     }
 
     return (
@@ -105,10 +105,10 @@ export default async function DashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-text-main flex items-center gap-2">
-                        Hola, {profile?.full_name?.split(' ')[0] || 'Agente'} 👋
+                        Hola, {profile?.nombre_completo?.split(' ')[0] || 'Agente'} 👋
                     </h1>
                     <p className="text-text-muted mt-1 font-medium">
-                        {role === 'agency_admin' ? 'Vista Global de Agencia' : 'Tu Resumen de Actividad'}
+                        {role === 'admin_agencia' ? 'Vista Global de Agencia' : 'Tu Resumen de Actividad'}
                     </p>
                 </div>
                 <Link href="/dashboard/new">
@@ -198,25 +198,25 @@ export default async function DashboardPage() {
                                 <div key={prop.id} className="p-4 rounded-2xl bg-white/60 hover:bg-white shadow-sm flex items-center justify-between transition-all group">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
-                                        ${prop.category === 'industrial' ? 'bg-blue-500' :
-                                                prop.category === 'comercial' ? 'bg-purple-500' : 'bg-green-500'}
+                                        ${prop.tipo === 'industrial' ? 'bg-blue-500' :
+                                                prop.tipo === 'comercial' ? 'bg-purple-500' : 'bg-green-500'}
                                     `}>
                                             <Building2 className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-text-main group-hover:text-primary transition-colors">{prop.title}</h3>
+                                            <h3 className="font-bold text-text-main group-hover:text-primary transition-colors">{prop.titulo}</h3>
                                             <p className="text-sm text-text-muted flex gap-2">
-                                                <span>{prop.address}</span>
-                                                <span className="text-primary font-semibold">• {formatCurrency(prop.price)}</span>
+                                                <span>{prop.direccion}</span>
+                                                <span className="text-primary font-semibold">• {formatCurrency(prop.precio || 0)}</span>
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-                                        ${prop.category === 'industrial' ? 'bg-blue-100 text-blue-700' :
-                                                prop.category === 'comercial' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}
+                                        ${prop.tipo === 'industrial' ? 'bg-blue-100 text-blue-700' :
+                                                prop.tipo === 'comercial' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}
                                      `}>
-                                            {prop.category}
+                                            {prop.tipo}
                                         </span>
                                         <Button variant="ghost" size="sm" className="hidden sm:flex text-text-muted hover:text-primary">
                                             Ver

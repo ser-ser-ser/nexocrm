@@ -315,6 +315,7 @@ export type Database = {
       perfiles: {
         Row: {
           avatar_url: string | null
+          comision_base: number | null
           creado_en: string | null
           email: string | null
           especialidad: string | null
@@ -326,6 +327,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          comision_base?: number | null
           creado_en?: string | null
           email?: string | null
           especialidad?: string | null
@@ -337,6 +339,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          comision_base?: number | null
           creado_en?: string | null
           email?: string | null
           especialidad?: string | null
