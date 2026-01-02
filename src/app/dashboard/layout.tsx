@@ -47,7 +47,7 @@ export default async function DashboardLayout({
     return (
         <div className="min-h-screen bg-background">
             {/* Desktop Sidebar - Now floating */}
-            <div className="hidden md:flex w-72 flex-col fixed inset-y-0 z-50">
+            <div className="hidden md:flex w-72 flex-col fixed inset-y-0">
                 <Sidebar userProfile={userProfile} />
             </div>
 
@@ -56,7 +56,7 @@ export default async function DashboardLayout({
                 {/* Mobile Header */}
                 <header className="md:hidden flex h-14 items-center gap-4 border-b bg-background px-6">
                     {/* Pass userProfile to MobileSidebar if needed, for now just keeping structure */}
-                    <MobileSidebar />
+                    {/* <MobileSidebar /> */}
                     <span className="font-semibold text-lg">NexoCRM</span>
                 </header>
 

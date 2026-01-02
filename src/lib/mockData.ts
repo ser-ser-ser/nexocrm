@@ -12,7 +12,7 @@ export const mockUsers = [
             full_name: "Laura Dueña",
             email: "laura@grupomaster.com",
             avatar_url: "https://i.pravatar.cc/150?u=laura",
-            role: "agency_admin",
+            role: "admin_agencia",
             agency_id: "00000000-0000-0000-0000-000000000100", // UUID format for 100
         }
     },
@@ -25,7 +25,7 @@ export const mockUsers = [
             full_name: "Pedro Vendedor",
             email: "pedro@grupomaster.com",
             avatar_url: "https://i.pravatar.cc/150?u=pedro",
-            role: "agent",
+            role: "agente",
             agency_id: "00000000-0000-0000-0000-000000000100", // Matches Laura's agency
         }
     },
@@ -38,7 +38,7 @@ export const mockUsers = [
             full_name: "Juan Freelance",
             email: "juan@independiente.com",
             avatar_url: "https://i.pravatar.cc/150?u=juan",
-            role: "independent",
+            role: "independiente",
             agency_id: null,
         }
     }

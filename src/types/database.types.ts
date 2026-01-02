@@ -7,24 +7,71 @@ export type Json =
   | Json[]
 
 export interface IndustrialCharacteristics {
-  tipo_nave?: string | null
-  altura_libre?: number | null
-  kv_as?: number | null
-  ano_construccion?: number | null
-  andenes?: {
-    con_rampa?: number | null
-    secos?: number | null
+  logistica?: {
+    andenes_carga?: number | null
+    rampas_nivel_piso?: number | null
+    cross_docking?: boolean | null
+    acceso_trailer_53?: boolean | null
+    patio_maniobras_m?: number | null
   } | null
-  piso?: {
-    resistencia_ton_m2?: number | null
-    espesor_cm?: number | null
+  construccion?: {
+    resistencia_piso_ton_m2?: number | null
+    tipo_techo?: string | null
+    iluminacion_natural_pct?: number | null
+    altura_libre_m?: number | null
   } | null
-  sistema_contra_incendio?: string | null
-  espuela_ferrocarril?: boolean | null
-  infraestructura?: string[] | null
-  documentacion?: string | null
-  m2_oficinas?: number | null
-  numero_banos?: number | string | null
+  servicios?: {
+    kvas_disponibles?: number | null
+    sistema_contra_incendios?: string | null
+  } | null
+  sustentabilidad?: {
+    certificacion_leed?: boolean | null
+    paneles_solares?: boolean | null
+    planta_tratamiento_agua?: boolean | null
+    sistema_captacion_pluvial?: boolean | null
+  } | null
+  amenidades?: string[] | null
+  sub_unidades?: any[] | null
+}
+
+export interface DetallesResidenciales {
+  amenidades?: string[]; // Ej: ['alberca', 'gimnasio', 'roof_garden', 'salon_usos_multiples']
+  servicios_interior?: {
+    cuarto_servicio?: boolean;
+    cuarto_lavado?: boolean;
+    aire_acondicionado_minisplit?: boolean;
+  };
+  reglas?: {
+    mascotas_permitidas?: boolean;
+  };
+  exterior?: {
+    jardin_privado?: boolean;
+    vigilancia_24_7?: boolean;
+  };
+}
+
+export interface DetallesComerciales {
+  // Específico para LOCALES
+  local_retail?: {
+    frente_metros?: number;
+    altura_libre?: number;
+    a_pie_de_calle?: boolean; // false = dentro de plaza
+    en_esquina?: boolean;
+    tiene_terraza?: boolean;
+    acometida_gas?: boolean;
+    giros_permitidos?: string[]; // ['alimentos', 'bebidas', 'servicios', 'banco']
+    guante_traspaso_mxn?: number;
+  };
+
+  // Específico para OFICINAS (Corporativo)
+  oficina?: {
+    tipo_entrega?: 'obra_gris' | 'acondicionada' | 'amueblada';
+    ratio_estacionamiento?: string; // Ej: "1:30"
+    sistema_aire_acondicionado?: 'puntas_agua_helada' | 'vrf' | 'minisplit' | 'ninguno';
+    certificacion_leed?: boolean;
+    control_acceso?: boolean;
+    elevadores_cantidad?: number;
+  };
 }
 
 export type Database = {
@@ -469,58 +516,139 @@ export type Database = {
       }
       propiedades: {
         Row: {
-          caracteristicas: Json | null
-          ciudad: string | null
-          creado_en: string | null
+          id: string
+          tipo: string | null
+          subtipo: string | null
+          titulo: string | null
           descripcion: string | null
           direccion: string | null
+          ciudad: string | null
           estado: string | null
-          id: string
-          imagen_principal: string | null
+          codigo_postal: string | null
+          latitud: number | null
+          longitud: number | null
+          ubicacion_maps_url: string | null
+          precio_mxn: number | null
+          precio_usd: number | null
+          moneda_predeterminada: string | null
+          superficie_construida: number | null
+          superficie_total: number | null
+          altura: number | null
+          oficinas: number | null
+          banos: number | null
+          cajones_estacionamiento: number | null
+          en_parque_industrial: boolean | null
+          en_fraccionamiento: boolean | null
+          propietario_id: string | null
+          registrado_por: string | null
+          compartida: boolean | null
+          co_gestores: string[] | null
+          etiquetas: string[] | null
+          estatus_publicacion: string | null
+          creado_en: string | null
+          actualizado_en: string | null
+          precio: number | null
+          id_agencia: string | null
           moneda: string | null
           operacion: Database["public"]["Enums"]["tipo_operacion"] | null
-          precio: number | null
-          propietario_id: string | null
-          desarrollo_id: string | null
-          tipo: Database["public"]["Enums"]["tipo_propiedad"] | null
-          titulo: string | null
           ubicacion: unknown | null
+          imagen_principal: string | null
+          caracteristicas: IndustrialCharacteristics | DetallesResidenciales | DetallesComerciales | Record<string, any> | null
+          desarrollo_id: string | null
+          superficie_terreno: number | null
+          comision_esquema: string | null
+          comparte_comision: boolean | null
+          visible_red_brokers: boolean | null
         }
         Insert: {
-          caracteristicas?: Json | null
-          ciudad?: string | null
-          creado_en?: string | null
+          id?: string
+          tipo?: string | null
+          subtipo?: string | null
+          titulo?: string | null
           descripcion?: string | null
           direccion?: string | null
+          ciudad?: string | null
           estado?: string | null
-          id?: string
-          imagen_principal?: string | null
+          codigo_postal?: string | null
+          latitud?: number | null
+          longitud?: number | null
+          ubicacion_maps_url?: string | null
+          precio_mxn?: number | null
+          precio_usd?: number | null
+          moneda_predeterminada?: string | null
+          superficie_construida?: number | null
+          superficie_total?: number | null
+          altura?: number | null
+          oficinas?: number | null
+          banos?: number | null
+          cajones_estacionamiento?: number | null
+          en_parque_industrial?: boolean | null
+          en_fraccionamiento?: boolean | null
+          propietario_id?: string | null
+          registrado_por?: string | null
+          compartida?: boolean | null
+          co_gestores?: string[] | null
+          etiquetas?: string[] | null
+          estatus_publicacion?: string | null
+          creado_en?: string | null
+          actualizado_en?: string | null
+          precio?: number | null
+          id_agencia?: string | null
           moneda?: string | null
           operacion?: Database["public"]["Enums"]["tipo_operacion"] | null
-          precio?: number | null
-          propietario_id?: string | null
-          desarrollo_id?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_propiedad"] | null
-          titulo?: string | null
           ubicacion?: unknown | null
+          imagen_principal?: string | null
+          caracteristicas?: IndustrialCharacteristics | Record<string, any> | null
+          desarrollo_id?: string | null
+          superficie_terreno?: number | null
+          comision_esquema?: string | null
+          comparte_comision?: boolean | null
+          visible_red_brokers?: boolean | null
         }
         Update: {
-          caracteristicas?: Json | null
-          ciudad?: string | null
-          creado_en?: string | null
+          id?: string
+          tipo?: string | null
+          subtipo?: string | null
+          titulo?: string | null
           descripcion?: string | null
           direccion?: string | null
+          ciudad?: string | null
           estado?: string | null
-          id?: string
-          imagen_principal?: string | null
+          codigo_postal?: string | null
+          latitud?: number | null
+          longitud?: number | null
+          ubicacion_maps_url?: string | null
+          precio_mxn?: number | null
+          precio_usd?: number | null
+          moneda_predeterminada?: string | null
+          superficie_construida?: number | null
+          superficie_total?: number | null
+          altura?: number | null
+          oficinas?: number | null
+          banos?: number | null
+          cajones_estacionamiento?: number | null
+          en_parque_industrial?: boolean | null
+          en_fraccionamiento?: boolean | null
+          propietario_id?: string | null
+          registrado_por?: string | null
+          compartida?: boolean | null
+          co_gestores?: string[] | null
+          etiquetas?: string[] | null
+          estatus_publicacion?: string | null
+          creado_en?: string | null
+          actualizado_en?: string | null
+          precio?: number | null
+          id_agencia?: string | null
           moneda?: string | null
           operacion?: Database["public"]["Enums"]["tipo_operacion"] | null
-          precio?: number | null
-          propietario_id?: string | null
-          desarrollo_id?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_propiedad"] | null
-          titulo?: string | null
           ubicacion?: unknown | null
+          imagen_principal?: string | null
+          caracteristicas?: IndustrialCharacteristics | Record<string, any> | null
+          desarrollo_id?: string | null
+          superficie_terreno?: number | null
+          comision_esquema?: string | null
+          comparte_comision?: boolean | null
+          visible_red_brokers?: boolean | null
         }
         Relationships: [
           {

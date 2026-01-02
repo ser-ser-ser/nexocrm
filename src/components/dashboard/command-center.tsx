@@ -2,23 +2,30 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MOCK_DASHBOARD } from "@/lib/mock-data"
-import { Building2, DollarSign, TrendingUp, Users, Wallet } from "lucide-react"
+import { Building2, DollarSign, TrendingUp, Wallet, PieChart as PieIcon } from "lucide-react"
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts'
+import { formatCurrency } from "@/lib/utils"
 
-export function CommandCenter() {
-    const { financial, marketing, inventory } = MOCK_DASHBOARD
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-            maximumFractionDigits: 0
-        }).format(amount)
+interface DashboardMetrics {
+    financial: {
+        totalInventoryValue: number
+        estimatedCommission: number
     }
+    inventory: {
+        total: number
+        distribution: { name: string; value: number; fill: string }[]
+    }
+}
+
+export function CommandCenter({ metrics }: { metrics: DashboardMetrics }) {
+    const { financial, inventory } = metrics
+
+
+
+    const hasInventory = inventory.total > 0
 
     return (
         <div className="space-y-6">
@@ -35,12 +42,12 @@ export function CommandCenter() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-slate-900">
-                            {formatCurrency(financial.totalValue)}
+                            {formatCurrency(financial.totalInventoryValue)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center">
                             <TrendingUp className="h-3 w-3 mr-1 text-emerald-600" />
-                            <span className="text-emerald-600 font-medium">+{financial.monthlyGrowth}%</span>
-                            <span className="ml-1">vs mes anterior</span>
+                            <span className="text-emerald-600 font-medium">Activo</span>
+                            <span className="ml-1">en portafolio</span>
                         </p>
                     </CardContent>
                 </Card>
@@ -58,7 +65,7 @@ export function CommandCenter() {
                             {formatCurrency(financial.estimatedCommission)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Potencial en pipeline activo
+                            Potencial aproximado
                         </p>
                     </CardContent>
                 </Card>
@@ -73,61 +80,8 @@ export function CommandCenter() {
                         <CardTitle className="text-lg">Tráfico y Adquisición</CardTitle>
                         <CardDescription>Rendimiento de campañas digitales y web</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <Tabs defaultValue="web" className="space-y-4">
-                            <TabsList>
-                                <TabsTrigger value="web">Analytics (Web)</TabsTrigger>
-                                <TabsTrigger value="leads">Meta Ads (Leads)</TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="web" className="h-[250px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={marketing.web}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis
-                                            dataKey="name"
-                                            stroke="#888888"
-                                            fontSize={12}
-                                            tickLine={false}
-                                            axisLine={false}
-                                        />
-                                        <YAxis
-                                            stroke="#888888"
-                                            fontSize={12}
-                                            tickLine={false}
-                                            axisLine={false}
-                                            tickFormatter={(value) => `${value}`}
-                                        />
-                                        <Tooltip
-                                            cursor={{ fill: 'transparent' }}
-                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Bar dataKey="visitas" fill="#cbd5e1" radius={[4, 4, 0, 0]} name="Visitas" />
-                                        <Bar dataKey="usuarios" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Usuarios Unicos" />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </TabsContent>
-
-                            <TabsContent value="leads" className="h-[250px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={marketing.leads} layout="vertical">
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} stroke="#e2e8f0" />
-                                        <XAxis type="number" hide />
-                                        <YAxis
-                                            dataKey="name"
-                                            type="category"
-                                            stroke="#888888"
-                                            fontSize={12}
-                                            tickLine={false}
-                                            axisLine={false}
-                                        />
-                                        <Tooltip cursor={{ fill: 'transparent' }} />
-                                        <Bar dataKey="google" fill="#ea4335" radius={[0, 4, 4, 0]} name="Google Ads" stackId="stack" />
-                                        <Bar dataKey="meta" fill="#1877f2" radius={[0, 4, 4, 0]} name="Meta (Facebook)" stackId="stack" />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </TabsContent>
-                        </Tabs>
+                    <CardContent className="h-[250px] flex items-center justify-center text-muted-foreground text-sm bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                        Próximamente: Integración con GA4 y Meta Ads
                     </CardContent>
                 </Card>
 
@@ -138,25 +92,32 @@ export function CommandCenter() {
                         <CardDescription>Distribución por tipo</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 min-h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={inventory.distribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {inventory.distribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {hasInventory ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={inventory.distribution}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {inventory.distribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+                                <PieIcon className="w-10 h-10 opacity-20" />
+                                <span className="text-sm">Sin propiedades registradas</span>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

@@ -48,7 +48,7 @@ export default function MapPicker({ lat, lng, onLocationSelect }: MapPickerProps
 
     return (
         <div className="h-[400px] w-full rounded-md overflow-hidden border border-slate-300 z-0 relative">
-            <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
+            <MapContainer key={`${center[0]}-${center[1]}`} center={center} zoom={13} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

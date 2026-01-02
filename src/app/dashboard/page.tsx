@@ -48,12 +48,12 @@ export default async function DashboardPage() {
     const role = profile?.rol || 'agente'
     const agencyId = profile?.id_agencia
 
-    // 3. Fetch Recent Activity (Real Data)
+    // 3. Fetch Properties (All for stats, Limit 5 for recent)
     let propertiesQuery = supabase
         .from('propiedades')
-        .select('*')
+        .select('id, titulo, precio, tipo, direccion, creado_en')
+        .eq('estado', 'publicada') // Only count published properties for value
         .order('creado_en', { ascending: false })
-        .limit(5)
 
     if (role === 'admin_agencia' && agencyId) {
         const { data: agencyMembers } = await supabase.from('perfiles').select('id').eq('id_agencia', agencyId)
@@ -66,8 +66,35 @@ export default async function DashboardPage() {
         propertiesQuery = propertiesQuery.eq('propietario_id', user.id)
     }
 
-    const { data: properties } = await propertiesQuery
-    const recentProperties = properties || []
+    const { data: allProperties } = await propertiesQuery
+    const properties = allProperties || []
+
+    // 4. Calculate Metrics
+    const totalInventoryValue = properties.reduce((sum, prop) => sum + (prop.precio || 0), 0)
+    const estimatedCommission = totalInventoryValue * 0.05
+
+    // Distribution
+    const industrialCount = properties.filter(p => p.tipo === 'industrial').length
+    const commercialCount = properties.filter(p => p.tipo === 'comercial').length
+    const residentialCount = properties.filter(p => !['industrial', 'comercial'].includes(p.tipo)).length // Catch-all or land
+
+    const metrics = {
+        financial: {
+            totalInventoryValue,
+            estimatedCommission
+        },
+        inventory: {
+            total: properties.length,
+            distribution: [
+                { name: 'Industrial', value: industrialCount, fill: '#475569' }, // Slate-600
+                { name: 'Comercial', value: commercialCount, fill: '#4f46e5' }, // Indigo-600
+                { name: 'Residencial / Otros', value: residentialCount, fill: '#059669' }, // Emerald-600
+            ].filter(item => item.value > 0)
+        }
+    }
+
+    // Recent properties (last 5)
+    const recentProperties = properties.slice(0, 5)
 
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-700">
@@ -89,8 +116,8 @@ export default async function DashboardPage() {
                 </Link>
             </div>
 
-            {/* COMMAND CENTER (Financial, Marketing, Stats) */}
-            <CommandCenter />
+            {/* COMMAND CENTER (Financial & Inventory Stats) */}
+            <CommandCenter metrics={metrics} />
 
             {/* Recent Activity List (Real Data) */}
             <div className="mt-8">

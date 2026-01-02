@@ -26,8 +26,15 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Plus, Upload, ImagePlus, DollarSign, Zap, Droplets, Flame, Ruler, Leaf, FileText, MonitorPlay } from "lucide-react"
+import { Loader2, Plus, Upload, ImagePlus, DollarSign, Zap, Droplets, Flame, Ruler, Leaf, FileText, MonitorPlay, MapPin } from "lucide-react"
 import { NumericFormat } from "react-number-format"
+import { uploadFiles } from "@/lib/upload"
+import dynamic from "next/dynamic"
+
+const MapPicker = dynamic(() => import("@/components/ui/map-picker"), {
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-slate-100 animate-pulse rounded-md flex items-center justify-center text-muted-foreground">Cargando Mapa...</div>
+})
 
 export function NuevoDesarrolloDialog() {
     const [open, setOpen] = useState(false)
@@ -38,7 +45,19 @@ export function NuevoDesarrolloDialog() {
     // General
     const [nombre, setNombre] = useState("")
     const [tipo, setTipo] = useState<string>("industrial")
-    const [ubicacion, setUbicacion] = useState("")
+    // const [ubicacion, setUbicacion] = useState("") // Deprecated simple string
+
+    // Detailed Address (V3 Request)
+    const [calle, setCalle] = useState("")
+    const [numero, setNumero] = useState("")
+    const [colonia, setColonia] = useState("")
+    const [cp, setCp] = useState("")
+    const [municipio, setMunicipio] = useState("")
+    const [estado, setEstado] = useState("Nuevo León")
+
+    // Map Coords
+    const [lat, setLat] = useState<number>(25.6866)
+    const [lng, setLng] = useState<number>(-100.3161)
 
     // Amenidades (Lista simple)
     const [amenidadesList, setAmenidadesList] = useState<string[]>([])
@@ -59,7 +78,7 @@ export function NuevoDesarrolloDialog() {
     const [agua, setAgua] = useState("Red Municipal")
     const [gas, setGas] = useState("No disponible")
 
-    // Multimedia (UI Only for now)
+    // Multimedia (Real Files)
     const [filesMasterPlan, setFilesMasterPlan] = useState<File[]>([])
     const [filesRenders, setFilesRenders] = useState<File[]>([])
     const [filesDocs, setFilesDocs] = useState<File[]>([])
@@ -85,6 +104,17 @@ export function NuevoDesarrolloDialog() {
         )
     }
 
+    const handleLocationSelect = (newLat: number, newLng: number) => {
+        setLat(newLat)
+        setLng(newLng)
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setFn: React.Dispatch<React.SetStateAction<File[]>>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFn(Array.from(e.target.files))
+        }
+    }
+
     const availableAmenities = [
         "Seguridad 24/7", "Control de Acceso", "CCTV", "Barda Perimetral",
         "Andenes Comunes", "Comedor", "Guarderia", "Centro de Negocios",
@@ -107,6 +137,18 @@ export function NuevoDesarrolloDialog() {
             const num = (val: string) => val ? Number(val.replace(/[^0-9.]/g, '')) : 0
 
             // Construct rich JSONB object
+            // 1. Upload Files
+            let masterPlanUrls: string[] = []
+            let rendersUrls: string[] = []
+            let docsUrls: string[] = []
+
+            if (filesMasterPlan.length > 0) masterPlanUrls = await uploadFiles(filesMasterPlan, 'developments-docs', 'master-plans')
+            if (filesRenders.length > 0) rendersUrls = await uploadFiles(filesRenders, 'developments-docs', 'renders')
+            if (filesDocs.length > 0) docsUrls = await uploadFiles(filesDocs, 'developments-docs', 'documents')
+
+            // 2. Construct Objects
+            const fullAddress = `${calle} ${numero}, ${colonia}, ${municipio}, ${estado}, CP ${cp}`
+
             const amenidadesData = {
                 amenities_list: amenidadesList,
                 sustainability_list: sustentabilidadList,
@@ -124,15 +166,13 @@ export function NuevoDesarrolloDialog() {
                     water_supply: agua,
                     natural_gas: gas
                 },
-                // Multimedia metadata placeholder until we upload files
-                multimedia_meta: {
-                    has_master_plan: filesMasterPlan.length > 0,
-                    has_renders: filesRenders.length > 0,
-                    has_docs: filesDocs.length > 0,
-                    file_counts: {
-                        renders: filesRenders.length,
-                        docs: filesDocs.length
-                    }
+                address_details: {
+                    calle, numero, colonia, cp, municipio, estado
+                },
+                multimedia: {
+                    master_plan: masterPlanUrls,
+                    renders: rendersUrls,
+                    documents: docsUrls
                 }
             }
 
@@ -141,9 +181,12 @@ export function NuevoDesarrolloDialog() {
                 .insert({
                     nombre,
                     tipo: tipo as "industrial" | "residencial" | "mixto",
-                    ubicacion,
-                    amenidades: amenidadesData, // Storing strictured object
-                    // master_plan_url: null (Pending upload logic)
+                    ubicacion: fullAddress, // Summary string
+                    amenidades: amenidadesData,
+                    // Store strict postgis point if column exists, otherwise relying on amenidades or just summary
+                    // Assuming schema might not have 'coords' yet, or using 'ubicacion' as text.
+                    // If we wanted to store point: 
+                    // location: `SRID=4326;POINT(${lng} ${lat})` 
                 })
 
             if (error) throw error
@@ -152,11 +195,12 @@ export function NuevoDesarrolloDialog() {
             router.refresh()
 
             // Reset form (Basic reset)
+            // Reset form
             setNombre("")
-            setUbicacion("")
+            setCalle(""); setNumero(""); setColonia(""); setCp(""); setMunicipio("");
             setAmenidadesList([])
             setSustentabilidadList([])
-            setFilesRenders([])
+            setFilesRenders([]); setFilesMasterPlan([]); setFilesDocs([]);
 
         } catch (error) {
             console.error(error)
@@ -199,7 +243,7 @@ export function NuevoDesarrolloDialog() {
                                         className="text-lg"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="grid gap-2">
                                         <Label htmlFor="tipo">Vocación</Label>
                                         <Select value={tipo} onValueChange={setTipo}>
@@ -214,15 +258,45 @@ export function NuevoDesarrolloDialog() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="ubicacion">Ubicación</Label>
-                                        <Input
-                                            id="ubicacion"
-                                            value={ubicacion}
-                                            onChange={(e) => setUbicacion(e.target.value)}
-                                            placeholder="Ciudad, Estado"
-                                        />
+                                </div>
+
+                                {/* Address Fields */}
+                                <div className="space-y-2 border rounded-md p-4 bg-slate-50/50">
+                                    <h4 className="text-sm font-medium flex items-center gap-2"><MapPin className="w-4 h-4" /> Dirección Física</h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <div className="md:col-span-2">
+                                            <Label className="text-xs">Calle</Label>
+                                            <Input value={calle} onChange={e => setCalle(e.target.value)} placeholder="Av. Principal" className="h-8" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Número</Label>
+                                            <Input value={numero} onChange={e => setNumero(e.target.value)} placeholder="123" className="h-8" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Colonia</Label>
+                                            <Input value={colonia} onChange={e => setColonia(e.target.value)} placeholder="Colonia" className="h-8" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Código Postal</Label>
+                                            <Input value={cp} onChange={e => setCp(e.target.value)} placeholder="00000" className="h-8" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Municipio</Label>
+                                            <Input value={municipio} onChange={e => setMunicipio(e.target.value)} placeholder="Municipio" className="h-8" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Estado</Label>
+                                            <Input value={estado} onChange={e => setEstado(e.target.value)} placeholder="Nuevo León" className="h-8" />
+                                        </div>
                                     </div>
+                                </div>
+
+                                <div className="h-[250px] w-full rounded-md overflow-hidden border">
+                                    <MapPicker
+                                        onLocationSelect={handleLocationSelect}
+                                        initialLat={lat}
+                                        initialLng={lng}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -370,27 +444,50 @@ export function NuevoDesarrolloDialog() {
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                                <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/40 text-center">
+                                <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/40 text-center relative hover:bg-slate-100 transition-colors">
                                     <Upload className="h-6 w-6 text-slate-400 mb-2" />
                                     <p className="text-sm font-medium">Master Plan / Logo</p>
-                                    <p className="text-[10px] text-muted-foreground">PNG, JPG</p>
+                                    <p className="text-[10px] text-muted-foreground mb-2">PNG, JPG</p>
+                                    <Input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileChange(e, setFilesMasterPlan)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    />
+                                    {filesMasterPlan.length > 0 && <span className="text-xs text-emerald-600 font-bold">{filesMasterPlan.length} archivo(s)</span>}
                                 </div>
 
-                                <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/40 text-center">
+                                <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/40 text-center relative hover:bg-slate-100 transition-colors">
                                     <MonitorPlay className="h-6 w-6 text-slate-400 mb-2" />
                                     <p className="text-sm font-medium">Renders</p>
-                                    <p className="text-[10px] text-muted-foreground">Perspectivas 3D</p>
+                                    <p className="text-[10px] text-muted-foreground mb-2">Perspectivas 3D</p>
+                                    <Input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) => handleFileChange(e, setFilesRenders)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    />
+                                    {filesRenders.length > 0 && <span className="text-xs text-emerald-600 font-bold">{filesRenders.length} archivo(s)</span>}
                                 </div>
 
-                                <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/40 text-center">
+                                <div className="border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/40 text-center relative hover:bg-slate-100 transition-colors">
                                     <FileText className="h-6 w-6 text-slate-400 mb-2" />
                                     <p className="text-sm font-medium">Documentos</p>
-                                    <p className="text-[10px] text-muted-foreground">Brochure, Estudios</p>
+                                    <p className="text-[10px] text-muted-foreground mb-2">PDF, Brochure</p>
+                                    <Input
+                                        type="file"
+                                        accept=".pdf"
+                                        multiple
+                                        onChange={(e) => handleFileChange(e, setFilesDocs)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    />
+                                    {filesDocs.length > 0 && <span className="text-xs text-emerald-600 font-bold">{filesDocs.length} archivo(s)</span>}
                                 </div>
 
                             </div>
                             <p className="text-xs text-muted-foreground text-center">
-                                * La carga de archivos estará disponible en la siguiente etapa. Por ahora se habilitó la interfaz.
+                                * Los archivos se subirán automáticamente al guardar el desarrollo.
                             </p>
                         </div>
 

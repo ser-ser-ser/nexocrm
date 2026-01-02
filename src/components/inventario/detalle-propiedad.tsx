@@ -13,14 +13,10 @@ interface DetallePropiedadProps {
     initialData: Property
 }
 
+import { formatCurrency } from "@/lib/utils"
+
 export default function DetallePropiedad({ initialData }: DetallePropiedadProps) {
-    const formatCurrency = (amount: number | null, currency: string | null) => {
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: currency || 'MXN',
-            maximumFractionDigits: 0,
-        }).format(amount || 0)
-    }
+
 
     const getPropertyIcon = (type: string | null) => {
         switch (type) {
@@ -156,17 +152,49 @@ export default function DetallePropiedad({ initialData }: DetallePropiedadProps)
                 {/* Left Column: Gallery & Description */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Placeholder Gallery */}
-                    <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden shadow-sm relative group clay-card">
-                        <div className="text-center">
-                            <div className="mx-auto bg-white p-4 rounded-full shadow-sm mb-2 w-16 h-16 flex items-center justify-center">
-                                {getPropertyIcon(initialData.tipo)}
-                            </div>
-                            <span className="text-sm font-bold text-slate-800 tracking-wide uppercase">Galería</span>
-                        </div>
-                        <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm">
-                            1/5 Fotos
-                        </div>
-                    </div>
+                    {/* Gallery Section */}
+                    {(() => {
+                        const images = (initialData.caracteristicas as any)?.imagenes || [initialData.imagen_principal].filter(Boolean)
+
+                        if (images && images.length > 0) {
+                            return (
+                                <div className="space-y-4">
+                                    {/* Main Image */}
+                                    <div className="aspect-video relative rounded-2xl overflow-hidden shadow-sm group">
+                                        <img
+                                            src={images[0]}
+                                            alt={initialData.titulo || 'Propiedad'}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                        <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm font-medium">
+                                            1 / {images.length}
+                                        </div>
+                                    </div>
+                                    {/* Thumbnails (if more than 1) */}
+                                    {images.length > 1 && (
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {images.slice(1, 5).map((img: string, i: number) => (
+                                                <div key={i} className="aspect-square rounded-lg overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+                                                    <img src={img} alt={`Vista ${i + 2}`} className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        } else {
+                            return (
+                                <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden shadow-sm relative group clay-card flex items-center justify-center">
+                                    <div className="text-center">
+                                        <div className="mx-auto bg-white p-4 rounded-full shadow-sm mb-2 w-16 h-16 flex items-center justify-center">
+                                            {getPropertyIcon(initialData.tipo)}
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-800 tracking-wide uppercase">Sin Fotos</span>
+                                    </div>
+                                </div>
+                            )
+                        }
+                    })()}
 
                     <Card className="border-none shadow-none bg-transparent">
                         <CardHeader className="px-0">
